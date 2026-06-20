@@ -35,13 +35,15 @@ Node ≥ 18。依赖仅 `axios` / `dayjs` / `dotenv`。
 
 之后用自然语言即可触发，例如「帮我落一张串关」「今天的票结算一下」。`SKILL.md` 是给 agent 看的操作说明书。
 
-## 跨 agent 使用（Codex / GPT / Hermes 等）
+## 跨 agent 使用
 
-核心是一个标准 CLI（argv 进、JSON 出、退出码 0/1），不绑定任何 agent。一核多壳：
+核心是一个标准 CLI（argv 进、JSON 出、退出码 0/1），不绑定任何特定 agent 或模型。能执行 shell 命令或调用函数的 agent / harness 都能挂载它——一核多壳：
 
-- **Claude 系**：读 `SKILL.md`（本仓库根目录）。
-- **Codex 及遵循 AGENTS.md 约定的 agent**：读 `AGENTS.md`。
-- **任意 function-calling 模型**：用 `tools.schema.json` 把 7 个命令注册成 tool/function，落到对应 `node scripts/cli.js <action>` 调用。
+- **Claude Code、claude.ai 等 Claude 系 harness**：读 `SKILL.md`（本仓库根目录）。
+- **Codex 及其他遵循 AGENTS.md 约定的 harness**：读 `AGENTS.md`。
+- **自建 agent / 任意支持 function-calling 的模型**（GPT、Claude、Hermes 等，配上能执行命令的循环）：用 `tools.schema.json` 把 7 个命令注册成 tool/function，落到对应 `node scripts/cli.js <action>` 调用。
+
+> 注：GPT / Hermes 等是**模型**，本身不执行命令；真正调用 CLI 的是包着模型的 agent/harness（如 Codex，或你自建的应用）。
 
 ## 直接用 CLI
 

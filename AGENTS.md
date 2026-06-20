@@ -1,10 +1,12 @@
 # AGENTS.md
 
-跨 agent 使用指南。本仓库的核心是一个**标准 Node.js CLI**（`scripts/cli.js`），任何能执行 shell 命令或调用函数的 agent 都能用——不限于 Claude。
+跨 agent 使用指南。本仓库的核心是一个**标准 Node.js CLI**（`scripts/cli.js`），任何能执行 shell 命令或调用函数的 agent / harness 都能用——不限于 Claude。
 
 - **Claude 系**（Claude Code / claude.ai）：读根目录 `SKILL.md`，放进 skills 目录自动发现。
-- **OpenAI Codex / 其他遵循 AGENTS.md 约定的 agent**：读本文件。
-- **任意 function-calling 模型**（GPT、Hermes 外挂框架、LangChain 等）：用 `tools.schema.json` 把 7 个命令注册成 function/tool。
+- **OpenAI Codex / 其他遵循 AGENTS.md 约定的 harness**：读本文件。
+- **自建 agent，或外挂了执行循环的 function-calling 模型**（GPT、Claude、Hermes 等）：用 `tools.schema.json` 把 7 个命令注册成 function/tool。
+
+> 术语：GPT / Hermes 等是**模型**，本身不执行命令；调用本 CLI 的是包着模型的 agent/harness（如 Codex，或你自建的应用）。
 
 > ⚠️ 这是**记账与对账工具，不代购、不下注**。只记录投注、冻结当时赔率、按官方赛果对账盈亏。
 
