@@ -1,0 +1,30 @@
+{
+  "name": "cnlottery-tracker",
+  "version": "1.0.0",
+  "description": "中国彩票落票 + 对账 — Claude Code Agent Skill（CLI 形态，记账不代购）。当前支持竞彩足球，规划兼容更多彩种。",
+  "main": "scripts/cli.js",
+  "bin": {
+    "cnlottery": "scripts/cli.js"
+  },
+  "scripts": {
+    "test": "node --test scripts/test",
+    "cli": "node scripts/cli.js"
+  },
+  "keywords": [
+    "lottery",
+    "claude-code",
+    "agent-skill",
+    "sporttery",
+    "竞彩",
+    "彩票"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.1",
+    "dayjs": "^1.11.19",
+    "dotenv": "^16.4.5"
+  }
+}
