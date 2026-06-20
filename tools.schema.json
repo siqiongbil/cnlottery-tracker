@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "cnlottery-tracker tool definitions for function-calling agents. Each tool maps to a `node scripts/cli.js <action>` invocation; the process prints a JSON envelope {code,msg,data} to stdout (code:200 = success) and exits 0 on success, 1 on error. Run from the skill directory with deps installed (npm install). Set DATA_DIR env to a fixed path so tickets persist. This is a record-keeping/settlement tool for Chinese sports lottery (currently jc-football / 竞彩足球) — it does NOT place real bets.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_schedule",
+        "description": "查赛程 + 五类玩法赔率（had/hhad/crs/ttg/hafu）。对应: node scripts/cli.js schedule",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "比赛日 YYYY-MM-DD（Asia/Shanghai）。省略则取当前滚动窗口全部比赛。"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_bet",
+        "description": "落票 + 冻结赔率（记账，不代购）。对应: node scripts/cli.js bet --json='<票体>'。重复落票（同 mode+选项指纹）返回 code:409。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["single", "parlay"],
+              "description": "single=单关(各选项独立结算,部分中也算中); parlay=串关(全中才派彩)。省略按 selections 数量推断。"
+            },
+            "amount": {
+              "type": "number",
+              "description": "parlay=整票一注注额; single=各选项默认注额(可被逐项覆盖)。默认 2。"
+            },
+            "selections": {
+              "type": "array",
+              "minItems": 1,
+              "description": "投注选项。串关可跨不同比赛/比赛日。",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "比赛日 YYYY-MM-DD" },
+                  "teams": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "description": "1 或 2 个队名，定位比赛"
+                  },
+                  "matchId": { "type": ["integer", "string"], "description": "可选；直接指定比赛（出窗口/重名时最稳）" },
+                  "playType": {
+                    "type": "string",
+                    "enum": ["had", "hhad", "crs", "ttg", "hafu"],
+                    "description": "had=胜负平 hhad=让球胜负平 crs=比分 ttg=总进球 hafu=半全场"
+                  },
+                  "pick": {
+                    "type": "string",
+                    "description": "选号。had/hhad: 主胜|平|客胜; crs: '2:1'|胜其它|平其它|负其它; ttg: '0'..'6'|'7+'; hafu: 主主..客客"
+                  },
+                  "amount": { "type": "number", "description": "可选，single 模式逐项注额" },
+                  "odds": { "type": "number", "description": "可选；省略时按当时体彩快照补并冻结" }
+                },
+                "required": ["date", "teams", "playType", "pick"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["selections"],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_settle",
+        "description": "查赛果并结算当天所有票（含串关进行中提前判死活）。对应: node scripts/cli.js settle --date=...",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "结算的比赛日 YYYY-MM-DD（必填）" },
+            "verify": { "type": "boolean", "description": "可选；用体彩官方派彩结果交叉校验（每场一次额外请求）" }
+          },
+          "required": ["date"],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_stats",
+        "description": "跨日期总盈亏统计 + 逐项明细。对应: node scripts/cli.js stats",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "from": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "起始比赛日（含），省略统计全部已落盘日期" },
+            "to": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "结束比赛日（含）" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_odds_history",
+        "description": "查某场比赛随时间变动的历史赔率。对应: node scripts/cli.js odds-history。用 matchId，或 date+teams 定位。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "matchId": { "type": ["integer", "string"], "description": "比赛 ID（与 date+teams 二选一）" },
+            "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "比赛日（配合 teams 定位）" },
+            "teams": { "type": "string", "description": "队名，逗号分隔，如 '美国,澳大利亚'" },
+            "asOf": { "type": "string", "description": "YYYY-MM-DD 取当天收盘；'YYYY-MM-DD HH:mm[:ss]' 取该时点前最近一次变动；省略取最新" },
+            "all": { "type": "boolean", "description": "返回全部变动轨迹" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_clear_cache",
+        "description": "清上游接口内存缓存（赔率/赛果/派彩/实时比分）。无副作用。对应: node scripts/cli.js clear-cache",
+        "parameters": { "type": "object", "properties": {}, "additionalProperties": false }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cnlottery_clear_files",
+        "description": "危险：删除落盘票据。对应: node scripts/cli.js clear-files --confirm。删前须向用户确认。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "confirm": { "type": "boolean", "description": "必须 true 才执行" },
+            "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "清某天（与 all 二选一）" },
+            "all": { "type": "boolean", "description": "清全部落盘票据" }
+          },
+          "required": ["confirm"],
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
