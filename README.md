@@ -77,7 +77,7 @@ node scripts/cli.js settle --date=2026-06-21 --pretty
 - 派彩/校验：`getFixedBonusV1.qry`
 - 实时比分：`getMatchDataPageListV1.qry?method=live`（进行中比分，串关提前判死活）
 
-> 接口需带 `Referer`/`Origin` 头绕过体彩 WAF，已在 `scripts/config/index.js` 默认配置；可用环境变量覆盖，见 `.env.example`（如有）。
+> 请求体彩接口时会带上浏览器风格的 `User-Agent` / `Referer` / `Origin` 头（接口对来源有校验，缺失会被拒）。这些默认值已写在 `scripts/config/index.js`，可用环境变量 `SPORTTERY_REFERER` / `SPORTTERY_ORIGIN` / `USER_AGENT` 等覆盖。
 
 ## 玩法 / pick 速查
 
